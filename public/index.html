@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mail</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f4f6;--panel:#fff;--ink:#1c1f26;--muted:#6b7280;--line:#e3e5ea;--accent:#5b3fd1;--accent-ink:#fff;--hover:#f0edfb;--unread:#fff;--read:#f7f7f9;--sel:#e9e4fb;--danger:#c43c3c;--ui:"IBM Plex Sans",system-ui,sans-serif}
+:root[data-theme="dark"]{--bg:#17191e;--panel:#22252c;--ink:#e7e9ee;--muted:#9aa1ad;--line:#363a44;--accent:#9b84f0;--hover:#2d2a3d;--unread:#262932;--read:#1f2228;--sel:#35304f}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{font-family:var(--ui);background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden;font-size:14px}
+button,select,input,textarea{font:inherit;color:inherit}button{background:none;border:0;cursor:pointer;border-radius:8px;padding:7px 10px;line-height:1}button:hover{background:var(--hover)}button.on{background:var(--accent);color:var(--accent-ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:8px 14px;display:flex;align-items:center;gap:14px}
+.brand{font-weight:600;display:flex;align-items:center;gap:8px}.brand i{width:22px;height:22px;border-radius:6px;background:var(--accent);display:inline-block}
+.search{flex:1;max-width:640px;display:flex;align-items:center;background:var(--bg);border-radius:10px;padding:0 10px}
+.search input{border:0;background:transparent;padding:9px 8px}.search button{padding:5px 8px;color:var(--muted)}
+.hright{margin-left:auto;display:flex;align-items:center;gap:6px}
+#accSel{width:auto;padding:6px 8px}
+main{flex:1;display:flex;overflow:hidden}
+nav{width:230px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:auto;padding:12px 10px}
+nav .compose{background:var(--accent);color:var(--accent-ink);padding:12px;font-weight:500;border-radius:12px;margin-bottom:12px;text-align:center}nav .compose:hover{filter:brightness(1.1);background:var(--accent)}
+nav .f{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--ink)}
+nav .f:hover{background:var(--hover)}nav .f.on{background:var(--sel);font-weight:500}
+nav .f svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;opacity:.8}
+nav .f .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}nav .f .c{font-size:12px;color:var(--muted)}nav .f.on .c,nav .f.unread .c{color:var(--accent);font-weight:600}
+nav h4{font-size:11px;font-weight:600;color:var(--muted);margin:14px 12px 4px;text-transform:none}
+nav .add{color:var(--muted);font-size:13px;padding:6px 12px}
+.list{width:400px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+.lbar{display:flex;align-items:center;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line);min-height:44px}
+.lbar button{padding:6px 8px;color:var(--muted)}.lbar button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lbar .pg{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:2px}
+.rows{flex:1;overflow:auto}
+.row{display:grid;grid-template-columns:22px 22px 1fr auto;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;background:var(--read)}
+.row.unread{background:var(--unread)}.row.unread .who,.row.unread .sub{font-weight:600}
+.row:hover{box-shadow:inset 3px 0 var(--accent)}.row.on{background:var(--sel)}
+.row .who{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .sub{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.row .d{font-size:12px;color:var(--muted);white-space:nowrap;text-align:right}
+.row .star{color:#c9ccd3;font-size:16px;padding:0}.row .star.on{color:#f0b429}
+.row .att{color:var(--muted);font-size:12px}
+.row input{margin:0}
+.empty{padding:40px 20px;color:var(--muted);text-align:center;line-height:1.6}
+.reader{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.rbar{display:flex;align-items:center;gap:4px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.rbar button{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:5px}.rbar button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.msg{flex:1;overflow:auto;padding:18px 22px}
+.msg h2{margin:0 0 12px;font-size:20px;font-weight:600}
+.meta{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+.meta .m{flex:1;min-width:0;font-size:13px}.meta .m b{font-size:14px}.meta .m .to{color:var(--muted);margin-top:2px}.meta .d{color:var(--muted);font-size:12px;white-space:nowrap}
+.body{background:#fff;color:#111;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.body iframe{width:100%;border:0;min-height:300px;display:block;background:#fff}
+.atts{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.atts a{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--ink);text-decoration:none;font-size:13px}.atts a:hover{background:var(--hover)}.atts a small{color:var(--muted)}
+.quick{margin-top:14px;display:flex;gap:8px}.quick button{border:1px solid var(--line);background:var(--panel);padding:9px 14px}
+.compose{position:fixed;right:24px;bottom:0;width:620px;max-width:calc(100vw - 48px);max-height:calc(100vh - 60px);background:var(--panel);border-radius:14px 14px 0 0;box-shadow:0 -4px 40px rgba(0,0,0,.25);display:none;flex-direction:column;z-index:50;border:1px solid var(--line)}
+.compose.show{display:flex}.compose.max{width:calc(100vw - 48px);max-height:calc(100vh - 20px)}
+.compose .ch{display:flex;align-items:center;padding:10px 14px;background:var(--ink);color:var(--bg);border-radius:14px 14px 0 0;font-weight:500}.compose .ch span{flex:1}.compose .ch button{color:inherit;padding:4px 8px}
+.compose .fld{display:flex;align-items:center;border-bottom:1px solid var(--line);padding:0 14px;position:relative}
+.compose .fld label{width:52px;color:var(--muted);font-size:13px}.compose .fld input{border:0;border-radius:0;padding:9px 4px;background:transparent}
+.compose .fld .ccbtn{color:var(--muted);font-size:12px;padding:4px 6px}
+.compose .ed{flex:1;min-height:220px;overflow:auto;padding:14px;outline:none;line-height:1.5}
+.compose .ctb{display:flex;align-items:center;gap:2px;padding:6px 10px;border-top:1px solid var(--line);flex-wrap:wrap}
+.compose .ctb button{padding:6px 8px;font-size:13px}.compose .send{background:var(--accent);color:var(--accent-ink);padding:9px 20px;font-weight:500;border-radius:10px}.compose .send:hover{background:var(--accent);filter:brightness(1.1)}
+.compose .files{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 8px}.compose .files span{background:var(--bg);border-radius:8px;padding:4px 10px;font-size:12px}.compose .files span b{cursor:pointer;margin-left:6px;color:var(--muted)}
+.sugg{position:absolute;left:66px;top:100%;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:5;max-height:200px;overflow:auto;min-width:300px;display:none}.sugg div{padding:7px 10px;cursor:pointer;font-size:13px}.sugg div:hover,.sugg div.on{background:var(--hover)}.sugg small{color:var(--muted);margin-left:6px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:22px 24px;width:460px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3)}dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog h3{margin:0 0 6px;font-size:18px}dialog p{color:var(--muted);font-size:13px;margin:0 0 12px;line-height:1.5}dialog label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}dialog .primary{background:var(--accent);color:var(--accent-ink);padding:9px 16px}
+dialog details{margin-top:10px;font-size:13px}dialog details summary{cursor:pointer;color:var(--muted)}
+.row2{display:flex;gap:10px}.err{color:var(--danger);font-size:13px;margin-top:8px;min-height:18px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:200;display:flex;gap:14px;align-items:center}.toast.show{opacity:1;pointer-events:auto}.toast button{color:var(--accent);padding:2px 6px}
+.ctx{position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px;display:none;z-index:60;min-width:190px}.ctx.show{display:block}.ctx button{width:100%;text-align:left;padding:7px 10px;font-size:13px}.ctx hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle}@keyframes sp{to{transform:rotate(360deg)}}
+.badge{background:var(--accent);color:#fff;font-size:11px;padding:2px 6px;border-radius:10px}
+@media (max-width:1000px){nav{position:absolute;z-index:20;height:100%;transform:translateX(-100%);transition:transform .2s}nav.open{transform:none}.list{width:100%}.reader{position:absolute;inset:0;transform:translateX(100%);transition:transform .2s;z-index:10}.reader.open{transform:none}.compose{right:0;width:100vw;max-width:100vw}}
+.menubtn{display:none}@media (max-width:1000px){.menubtn{display:inline-flex}}
+</style>
+</head>
+<body>
+<header>
+  <button class="menubtn" id="menubtn">☰</button>
+  <div class="brand"><i></i>Mail</div>
+  <div class="search"><button title="Search">🔍</button><input id="q" placeholder="Search mail  (from:, to:, subject:, is:unread, is:starred, has:attachment)"><button id="qclear" title="Clear">✕</button></div>
+  <div class="hright"><select id="accSel"></select><button id="addAcc" title="Add account">+ Account</button><button id="themeBtn" title="Dark mode">◐</button><button id="refresh" title="Refresh (R)">↻</button></div>
+</header>
+<main>
+  <nav id="nav"><button class="compose" id="composeBtn">Compose</button><div id="folders"></div></nav>
+  <div class="list">
+    <div class="lbar">
+      <input type="checkbox" id="selAll" title="Select all" style="margin:0 6px">
+      <button data-a="archive" title="Archive (E)"><svg viewBox="0 0 24 24"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg></button>
+      <button data-a="spam" title="Report spam"><svg viewBox="0 0 24 24"><path d="m12 2 10 18H2z"/><path d="M12 9v5M12 17h.01"/></svg></button>
+      <button data-a="trash" title="Delete (#)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      <button data-a="read" title="Mark read"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></button>
+      <button data-a="unread" title="Mark unread"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/><circle cx="19" cy="6" r="3" fill="currentColor"/></svg></button>
+      <button data-a="star" title="Star (S)">☆</button>
+      <button id="moveBtn" title="Move to…">📁</button>
+      <div class="pg"><span id="pginfo"></span><button id="pgPrev">‹</button><button id="pgNext">›</button></div>
+    </div>
+    <div class="rows" id="rows"><div class="empty">Loading…</div></div>
+  </div>
+  <div class="reader" id="reader">
+    <div class="rbar">
+      <button id="backBtn" class="menubtn">←</button>
+      <button data-a="archive" title="Archive"><svg viewBox="0 0 24 24"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>Archive</button>
+      <button data-a="trash" title="Delete"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>Delete</button>
+      <button data-a="unread">Mark unread</button><button data-a="spam">Spam</button><button id="moveBtn2">Move to…</button>
+      <span style="flex:1"></span>
+      <button id="replyBtn">↩ Reply</button><button id="replyAllBtn">↩↩ Reply all</button><button id="fwdBtn">↪ Forward</button><button id="rawBtn" title="Download .eml">⤓</button><button id="printBtn">🖨</button>
+    </div>
+    <div class="msg" id="msg"><div class="empty">Select a message to read it.<br><small>Shortcuts: C compose · R refresh · E archive · # delete · S star · J/K next/prev · / search · Esc close</small></div></div>
+  </div>
+</main>
+
+<div class="compose" id="compose">
+  <div class="ch"><span id="ctitle">New message</span><button id="cmin" title="Minimize">—</button><button id="cmax" title="Maximize">⤢</button><button id="cclose" title="Close (saves draft)">✕</button></div>
+  <div id="cbody" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div class="fld"><label>To</label><input id="cto" autocomplete="off"><button class="ccbtn" id="ccToggle">Cc / Bcc</button><div class="sugg" id="sugg"></div></div>
+    <div class="fld" id="ccRow" style="display:none"><label>Cc</label><input id="ccc"></div>
+    <div class="fld" id="bccRow" style="display:none"><label>Bcc</label><input id="cbcc"></div>
+    <div class="fld"><label>Subject</label><input id="csub"></div>
+    <div class="ed" id="ced" contenteditable="true"></div>
+    <div class="files" id="cfiles"></div>
+    <div class="ctb">
+      <button class="send" id="csend">Send</button>
+      <button data-ex="bold" title="Bold"><b>B</b></button><button data-ex="italic" title="Italic"><i>I</i></button><button data-ex="underline" title="Underline"><u>U</u></button><button data-ex="insertUnorderedList" title="Bullets">•≡</button><button data-ex="insertOrderedList" title="Numbers">1≡</button><button id="clink" title="Link">🔗</button><button data-ex="removeFormat" title="Clear formatting">Tx</button><button id="crtl" title="RTL">RTL</button>
+      <button id="cattach" title="Attach files">📎</button><button id="cdiscard" title="Discard" style="margin-left:auto;color:var(--muted)">🗑</button>
+    </div>
+  </div>
+  <input type="file" id="cfile" multiple hidden>
+</div>
+
+<dialog id="dlg-acc">
+  <h3>Add a mailbox</h3>
+  <p>Works with Gmail, Outlook/Hotmail, Yahoo, iCloud, Walla, Zoho and any IMAP server. For Gmail, Outlook and Yahoo you must use an <b>app password</b>, not your normal password (see the help below). Credentials are stored only on your own server in <code>data/accounts.json</code>.</p>
+  <label>Your name</label><input id="a-name" placeholder="Or Hava">
+  <label>Email address</label><input id="a-email" type="email" placeholder="you@gmail.com">
+  <label>Password / app password</label><input id="a-pass" type="password">
+  <details><summary>Advanced (non-standard providers)</summary>
+    <label>Username (if different from email)</label><input id="a-user">
+    <div class="row2"><div style="flex:2"><label>IMAP host</label><input id="a-imap" placeholder="auto"></div><div style="flex:1"><label>Port</label><input id="a-imapp" type="number" placeholder="993"></div></div>
+    <div class="row2"><div style="flex:2"><label>SMTP host</label><input id="a-smtp" placeholder="auto"></div><div style="flex:1"><label>Port</label><input id="a-smtpp" type="number" placeholder="465"></div></div>
+    <label>Signature (HTML allowed)</label><textarea id="a-sig" rows="2"></textarea>
+  </details>
+  <details><summary>How to get an app password</summary><p style="margin-top:6px"><b>Gmail:</b> turn on 2-step verification, then Google Account → Security → App passwords → create one for "Mail". Also make sure IMAP is enabled in Gmail settings.<br><b>Outlook/Hotmail:</b> account.microsoft.com → Security → Advanced security options → App passwords.<br><b>Yahoo:</b> Account security → Generate app password.</p></details>
+  <div class="err" id="a-err"></div>
+  <div class="actions"><button id="a-del" style="margin-right:auto;color:var(--danger);display:none">Remove account</button><button data-close>Cancel</button><button class="primary" id="a-ok">Connect</button></div>
+</dialog>
+<dialog id="dlg-move"><h3>Move to folder</h3><div id="moveList" style="max-height:300px;overflow:auto"></div><div class="actions"><button data-close>Cancel</button></div></dialog>
+<dialog id="dlg-pw"><h3>Password</h3><p>This Mail server is protected. Enter the app password set in <code>.env</code>.</p><input id="pw" type="password"><div class="actions"><button class="primary" id="pw-ok">Continue</button></div></dialog>
+<div class="ctx" id="ctx"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let accounts=[],acc=null,folders=[],folder='INBOX',messages=[],total=0,page=0,PAGE=50,open=null,selected=new Set(),q='',contacts=[],drafts=[],composeState=null,pollT;
+const PW_KEY='mail.pw';const headers=()=>({'x-app-password':localStorage.getItem(PW_KEY)||''});
+async function api(p,opt={}){const r=await fetch('/api'+p,{...opt,headers:{...headers(),...(opt.body&&!(opt.body instanceof FormData)?{'Content-Type':'application/json'}:{}),...(opt.headers||{})}});if(r.status===401){$('#dlg-pw').showModal();throw new Error('Password required');}const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||r.statusText);return j;}
+$('#pw-ok').onclick=()=>{localStorage.setItem(PW_KEY,$('#pw').value);$('#dlg-pw').close();init();};
+let toastT;function toast(m,undo){const t=$('#toast');t.innerHTML=esc(m)+(undo?' <button id="undoBtn">Undo</button>':'');t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),undo?6000:2200);if(undo)$('#undoBtn').onclick=()=>{t.classList.remove('show');undo();};}
+const fmtDate=d=>{const x=new Date(d),n=new Date();if(isNaN(x))return '';if(x.toDateString()===n.toDateString())return x.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(x.getFullYear()===n.getFullYear())return x.toLocaleDateString([],{month:'short',day:'numeric'});return x.toLocaleDateString();};
+const who=(list,me)=>list.map(a=>a.address?.toLowerCase()===me?'me':(a.name||a.address)).join(', ')||'(unknown)';
+const fmtSize=n=>n>1e6?(n/1e6).toFixed(1)+' MB':n>1e3?Math.round(n/1e3)+' KB':n+' B';
+
+/* ---------- accounts ---------- */
+async function init(){
+  try{accounts=await api('/accounts');}catch(e){if(e.message!=='Password required')toast(e.message);return;}
+  const sel=$('#accSel');sel.innerHTML=accounts.map(a=>`<option value="${a.id}">${esc(a.email)}</option>`).join('');
+  if(!accounts.length){$('#rows').innerHTML='<div class="empty">No mailbox connected yet.<br><br><button class="primary" style="background:var(--accent);color:#fff" onclick="openAccDialog()">Add your first account</button></div>';$('#folders').innerHTML='';return;}
+  acc=accounts.find(a=>a.id===localStorage.getItem('mail.acc'))||accounts[0];sel.value=acc.id;
+  await loadFolders();await loadMessages();loadContacts();loadDrafts();
+  clearInterval(pollT);pollT=setInterval(()=>{if(!$('#compose').classList.contains('show'))loadFolders(true),loadMessages(true);},60000);
+}
+$('#accSel').onchange=e=>{acc=accounts.find(a=>a.id===e.target.value);localStorage.setItem('mail.acc',acc.id);folder='INBOX';page=0;open=null;renderMsg(null);init();};
+function openAccDialog(edit){const d=$('#dlg-acc');d.dataset.edit=edit?acc.id:'';$('#a-name').value=edit?acc.name:'';$('#a-email').value=edit?acc.email:'';$('#a-pass').value='';$('#a-sig').value=edit?acc.signature||'':'';$('#a-imap').value=edit?acc.imapHost:'';$('#a-smtp').value=edit?acc.smtpHost:'';$('#a-err').textContent='';$('#a-del').style.display=edit?'':'none';d.showModal();}
+$('#addAcc').onclick=()=>openAccDialog(false);
+$('#a-ok').onclick=async()=>{const b={id:$('#dlg-acc').dataset.edit||undefined,name:$('#a-name').value,email:$('#a-email').value.trim(),password:$('#a-pass').value,user:$('#a-user').value||undefined,imapHost:$('#a-imap').value||undefined,imapPort:$('#a-imapp').value||undefined,smtpHost:$('#a-smtp').value||undefined,smtpPort:$('#a-smtpp').value||undefined,signature:$('#a-sig').value};$('#a-ok').innerHTML='<span class="spin"></span> Connecting…';$('#a-err').textContent='';try{const a=await api('/accounts',{method:'POST',body:JSON.stringify(b)});localStorage.setItem('mail.acc',a.id);$('#dlg-acc').close();toast('Connected '+a.email);init();}catch(e){$('#a-err').textContent=e.message;}$('#a-ok').textContent='Connect';};
+$('#a-del').onclick=async()=>{if(!confirm('Remove this account from Mail?'))return;await api('/accounts/'+acc.id,{method:'DELETE'});$('#dlg-acc').close();localStorage.removeItem('mail.acc');acc=null;init();};
+
+/* ---------- folders ---------- */
+const ICONS={inbox:'<svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5 5h14l3 7v7H2v-7z"/></svg>',starred:'<svg viewBox="0 0 24 24"><path d="m12 2 3 7 7 .5-5.5 4.5 2 7-6.5-4-6.5 4 2-7L2 9.5 9 9z"/></svg>',sent:'<svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/></svg>',drafts:'<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',archive:'<svg viewBox="0 0 24 24"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>',spam:'<svg viewBox="0 0 24 24"><path d="m12 2 10 18H2z"/><path d="M12 9v5M12 17h.01"/></svg>',trash:'<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',all:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',folder:'<svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'};
+async function loadFolders(quiet){try{folders=await api(`/${acc.id}/folders`);}catch(e){if(!quiet)toast(e.message);return;}renderFolders();}
+function renderFolders(){
+  const order=['inbox','starred','sent','drafts','archive','spam','trash','all'];const sp=folders.filter(f=>f.special).sort((a,b)=>order.indexOf(a.special)-order.indexOf(b.special));const other=folders.filter(f=>!f.special&&f.path!=='[Gmail]');
+  const row=f=>`<div class="f ${f.path===folder?'on':''} ${f.unseen?'unread':''}" data-f="${esc(f.path)}">${ICONS[f.special]||ICONS.folder}<span class="n">${esc(f.special?({inbox:'Inbox',starred:'Starred',sent:'Sent',drafts:'Drafts',archive:'Archive',spam:'Spam',trash:'Trash',all:'All mail'})[f.special]:f.name)}</span>${f.special==='inbox'||!f.special?`<span class="c">${f.unseen||''}</span>`:''}</div>`;
+  const dr=drafts.length?`<div class="f ${folder==='__drafts'?'on':''}" data-f="__drafts">${ICONS.drafts}<span class="n">Local drafts</span><span class="c">${drafts.length}</span></div>`:'';
+  $('#folders').innerHTML=sp.map(row).join('')+dr+(other.length?'<h4>Folders</h4>'+other.map(row).join(''):'')+'<button class="add" id="newFolder">+ New folder</button><button class="add" id="editAcc">⚙ Account settings</button>';
+  $('#folders').querySelectorAll('[data-f]').forEach(d=>{d.onclick=()=>{folder=d.dataset.f;page=0;selected.clear();open=null;renderMsg(null);$('#nav').classList.remove('open');loadMessages();renderFolders();};d.oncontextmenu=e=>{e.preventDefault();const f=folders.find(x=>x.path===d.dataset.f);if(!f||f.special)return;ctxMenu(e,[['Delete folder',async()=>{if(confirm(`Delete folder "${f.name}" and its messages?`)){await api(`/${acc.id}/folders/${encodeURIComponent(f.path)}`,{method:'DELETE'});folder='INBOX';init();}}]]);};});
+  $('#newFolder').onclick=async()=>{const n=prompt('Folder name');if(!n)return;try{await api(`/${acc.id}/folders`,{method:'POST',body:JSON.stringify({path:n})});loadFolders();}catch(e){toast(e.message);}};
+  $('#editAcc').onclick=()=>openAccDialog(true);
+}
+const specialPath=s=>folders.find(f=>f.special===s)?.path;
+
+/* ---------- message list ---------- */
+let listReq=0;
+async function loadMessages(quiet){
+  if(folder==='__drafts'){renderDraftList();return;}
+  const my=++listReq;if(!quiet)$('#rows').innerHTML='<div class="empty"><span class="spin"></span></div>';
+  try{const r=await api(`/${acc.id}/messages?folder=${encodeURIComponent(folder)}&page=${page}&size=${PAGE}&q=${encodeURIComponent(q)}`);if(my!==listReq)return;messages=r.messages;total=r.total;}catch(e){if(!quiet)$('#rows').innerHTML=`<div class="empty">${esc(e.message)}<br><br><button onclick="loadMessages()">Retry</button></div>`;return;}
+  renderList();
+}
+function renderList(){
+  const me=acc.email.toLowerCase();const isSent=folders.find(f=>f.path===folder)?.special==='sent';
+  $('#rows').innerHTML=messages.length?messages.map(m=>`<div class="row ${m.seen?'':'unread'} ${open?.uid===m.uid?'on':''}" data-uid="${m.uid}"><input type="checkbox" ${selected.has(m.uid)?'checked':''}><button class="star ${m.flagged?'on':''}" title="Star">${m.flagged?'★':'☆'}</button><div><div class="who">${esc(isSent?'To: '+who(m.to,me):who(m.from,me))}${m.answered?' <span style="color:var(--muted)">↩</span>':''}</div><div class="sub">${esc(m.subject)}</div></div><div><div class="d">${fmtDate(m.date)}</div>${m.hasAttachment?'<div class="att">📎</div>':''}</div></div>`).join(''):`<div class="empty">${q?'No messages match your search.':'Nothing here.'}</div>`;
+  $('#pginfo').textContent=total?`${page*PAGE+1}–${Math.min(total,(page+1)*PAGE)} of ${total}`:'';$('#pgPrev').disabled=page===0;$('#pgNext').disabled=(page+1)*PAGE>=total;
+  $('#rows').querySelectorAll('.row').forEach(r=>{const uid=+r.dataset.uid;r.querySelector('input').onclick=e=>{e.stopPropagation();e.target.checked?selected.add(uid):selected.delete(uid);};r.querySelector('.star').onclick=e=>{e.stopPropagation();const m=messages.find(x=>x.uid===uid);doAction(m.flagged?'unstar':'star',[uid]);};r.onclick=()=>openMessage(uid);r.oncontextmenu=e=>{e.preventDefault();ctxMenu(e,[['Open',()=>openMessage(uid)],['Mark as read',()=>doAction('read',[uid])],['Mark as unread',()=>doAction('unread',[uid])],['Star',()=>doAction('star',[uid])],'-',['Archive',()=>doAction('archive',[uid])],['Move to…',()=>moveDialog([uid])],['Delete',()=>doAction('trash',[uid])]]);};});
+}
+$('#pgPrev').onclick=()=>{page--;loadMessages();};$('#pgNext').onclick=()=>{page++;loadMessages();};
+$('#selAll').onchange=e=>{selected.clear();if(e.target.checked)messages.forEach(m=>selected.add(m.uid));renderList();};
+$('#refresh').onclick=()=>{loadFolders(true);loadMessages();};
+let qT;$('#q').addEventListener('input',e=>{clearTimeout(qT);qT=setTimeout(()=>{q=e.target.value.trim();page=0;loadMessages();},400);});
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){q=e.target.value.trim();page=0;loadMessages();}});
+$('#qclear').onclick=()=>{$('#q').value='';q='';loadMessages();};
+
+/* ---------- actions ---------- */
+const targets=()=>selected.size?[...selected]:open?[open.uid]:[];
+async function doAction(action,uids,target){
+  uids=uids||targets();if(!uids.length)return;
+  const removed=['archive','trash','spam','move','delete'].includes(action);const prev=messages;
+  if(removed){messages=messages.filter(m=>!uids.includes(m.uid));total-=uids.length;if(open&&uids.includes(open.uid)){const i=prev.findIndex(m=>m.uid===open.uid);open=null;renderMsg(null);const nxt=messages[i]||messages[i-1];if(nxt)openMessage(nxt.uid);}}
+  else messages.forEach(m=>{if(uids.includes(m.uid)){if(action==='read')m.seen=true;if(action==='unread')m.seen=false;if(action==='star')m.flagged=true;if(action==='unstar')m.flagged=false;}});
+  selected.clear();$('#selAll').checked=false;renderList();
+  try{await api(`/${acc.id}/action`,{method:'POST',body:JSON.stringify({folder,uids,action,target})});if(removed)toast(`${uids.length} message(s) ${action==='trash'?'deleted':action==='move'?'moved':action+'d'}`);loadFolders(true);}
+  catch(e){toast(e.message);messages=prev;renderList();}
+}
+document.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(a==='star'){const t=targets();const m=messages.find(x=>x.uid===t[0]);doAction(m?.flagged?'unstar':'star',t);}else doAction(a);});
+function moveDialog(uids){uids=uids||targets();if(!uids.length)return;const l=$('#moveList');l.innerHTML=folders.filter(f=>f.path!==folder&&f.path!=='[Gmail]').map(f=>`<div class="f" data-m="${esc(f.path)}">${ICONS[f.special]||ICONS.folder}<span class="n">${esc(f.name)}</span></div>`).join('');l.querySelectorAll('[data-m]').forEach(d=>d.onclick=()=>{$('#dlg-move').close();doAction('move',uids,d.dataset.m);});$('#dlg-move').showModal();}
+$('#moveBtn').onclick=()=>moveDialog();$('#moveBtn2').onclick=()=>moveDialog();
+
+/* ---------- reader ---------- */
+async function openMessage(uid){
+  const m=messages.find(x=>x.uid===uid);$('#reader').classList.add('open');
+  $('#msg').innerHTML='<div class="empty"><span class="spin"></span></div>';
+  try{open=await api(`/${acc.id}/messages/${uid}?folder=${encodeURIComponent(folder)}`);}catch(e){$('#msg').innerHTML=`<div class="empty">${esc(e.message)}</div>`;return;}
+  open.folder=folder;if(m){m.seen=true;}renderList();renderMsg(open);loadFolders(true);
+}
+function renderMsg(m){
+  if(!m){$('#msg').innerHTML='<div class="empty">Select a message to read it.<br><small>Shortcuts: C compose · R refresh · E archive · # delete · S star · J/K next/prev · / search · Esc close</small></div>';return;}
+  const me=acc.email.toLowerCase();const f=m.from[0]||{};const ini=(f.name||f.address||'?')[0].toUpperCase();
+  const doc=`<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_blank"><style>body{font-family:system-ui,sans-serif;font-size:14px;line-height:1.5;margin:16px;color:#111;word-wrap:break-word}img{max-width:100%;height:auto}pre{white-space:pre-wrap}blockquote{border-left:3px solid #ccc;margin:0;padding-left:12px;color:#555}</style></head><body>${m.html||'<p style="color:#888">(empty message)</p>'}</body></html>`;
+  $('#msg').innerHTML=`<h2>${esc(m.subject)}</h2><div class="meta"><div class="avatar">${esc(ini)}</div><div class="m"><b>${esc(f.name||f.address)}</b> <span style="color:var(--muted)">&lt;${esc(f.address)}&gt;</span><div class="to">to ${esc(who(m.to,me))}${m.cc?.length?' · cc '+esc(who(m.cc,me)):''}</div>${m.headers?.['list-unsubscribe']?`<div class="to"><a href="${esc((m.headers['list-unsubscribe'].match(/<(https?:[^>]+)>/)||[])[1]||'#')}" target="_blank" style="color:var(--accent)">Unsubscribe</a></div>`:''}</div><div class="d">${new Date(m.date).toLocaleString()}</div></div>
+  ${m.attachments.length?`<div class="atts">${m.attachments.map(a=>`<a href="/api/${acc.id}/messages/${m.uid}/attachments/${a.index}?folder=${encodeURIComponent(m.folder)}" download="${esc(a.filename)}">📎 ${esc(a.filename)} <small>${fmtSize(a.size)}</small></a>`).join('')}</div>`:''}
+  <div class="body"><iframe id="mframe" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"></iframe></div>
+  <div class="quick"><button id="qReply">↩ Reply</button><button id="qFwd">↪ Forward</button></div>`;
+  const fr=$('#mframe');fr.srcdoc=doc;fr.onload=()=>{try{fr.style.height=Math.min(4000,fr.contentDocument.documentElement.scrollHeight+30)+'px';}catch{}};
+  $('#qReply').onclick=()=>reply(false);$('#qFwd').onclick=forward;
+  if(m.attachments.length){document.querySelectorAll('.atts a').forEach(a=>a.onclick=e=>{a.href+='&t='+Date.now();if(localStorage.getItem(PW_KEY)){e.preventDefault();fetch(a.href,{headers:headers()}).then(r=>r.blob()).then(b=>{const u=URL.createObjectURL(b);const l=document.createElement('a');l.href=u;l.download=a.download;l.click();});}});}
+}
+$('#backBtn').onclick=()=>$('#reader').classList.remove('open');$('#menubtn').onclick=()=>$('#nav').classList.toggle('open');
+$('#replyBtn').onclick=()=>reply(false);$('#replyAllBtn').onclick=()=>reply(true);$('#fwdBtn').onclick=forward;
+$('#rawBtn').onclick=()=>{if(!open)return;const u=`/api/${acc.id}/messages/${open.uid}/raw?folder=${encodeURIComponent(open.folder)}`;fetch(u,{headers:headers()}).then(r=>r.blob()).then(b=>{const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download=`message-${open.uid}.eml`;l.click();});};
+$('#printBtn').onclick=()=>{if(!open)return;const w=window.open('','_blank');w.document.write(`<title>${esc(open.subject)}</title><h2>${esc(open.subject)}</h2><p><b>From:</b> ${esc(open.from.map(a=>a.name+' <'+a.address+'>').join(', '))}<br><b>To:</b> ${esc(open.to.map(a=>a.address).join(', '))}<br><b>Date:</b> ${new Date(open.date).toLocaleString()}</p><hr>${open.html}`);w.document.close();w.print();};
+
+/* ---------- compose ---------- */
+const C=$('#compose');
+function quoteHeader(m){return `<br><br><div style="color:#555">On ${new Date(m.date).toLocaleString()}, ${esc(m.from.map(a=>(a.name?a.name+' ':'')+'<'+a.address+'>').join(', '))} wrote:</div><blockquote style="border-left:3px solid #ccc;margin:0;padding-left:12px;color:#555">${m.html||esc(m.text).replace(/\n/g,'<br>')}</blockquote>`;}
+function openCompose(s={}){composeState={id:s.id||Math.random().toString(36).slice(2,9),files:[],...s};C.classList.add('show');C.classList.remove('min');$('#cbody').style.display='flex';$('#ctitle').textContent=s.title||'New message';$('#cto').value=s.to||'';$('#ccc').value=s.cc||'';$('#cbcc').value=s.bcc||'';$('#csub').value=s.subject||'';$('#ced').innerHTML=s.html??(`<p><br></p>${acc.signature?'<p>--<br>'+acc.signature+'</p>':''}`);$('#ccRow').style.display=s.cc?'':'none';$('#bccRow').style.display=s.bcc?'':'none';renderFiles();(s.to?$('#csub'):$('#cto')).focus();if(s.to&&s.subject)$('#ced').focus();}
+function reply(all){if(!open)return;const me=acc.email.toLowerCase();const from=(open.replyTo?.length?open.replyTo:open.from).map(a=>a.address);let cc='';if(all){cc=[...open.to,...(open.cc||[])].map(a=>a.address).filter(a=>a&&a.toLowerCase()!==me&&!from.includes(a)).join(', ');}openCompose({title:'Reply',to:from.join(', '),cc,subject:/^re:/i.test(open.subject)?open.subject:'Re: '+open.subject,html:`<p><br></p>${acc.signature?'<p>--<br>'+acc.signature+'</p>':''}${quoteHeader(open)}`,inReplyTo:open.messageId,references:[...(open.references||[]),open.messageId].filter(Boolean).join(' '),inReplyToUid:open.uid,inReplyToFolder:open.folder});}
+function forward(){if(!open)return;openCompose({title:'Forward',subject:/^fwd?:/i.test(open.subject)?open.subject:'Fwd: '+open.subject,html:`<p><br></p>${acc.signature?'<p>--<br>'+acc.signature+'</p>':''}<br><div style="color:#555">---------- Forwarded message ----------<br>From: ${esc(open.from.map(a=>a.name+' <'+a.address+'>').join(', '))}<br>Date: ${new Date(open.date).toLocaleString()}<br>Subject: ${esc(open.subject)}<br>To: ${esc(open.to.map(a=>a.address).join(', '))}</div><br>${open.html}`,forwardUid:open.attachments.length?open.uid:undefined,forwardFolder:open.folder});if(open.attachments.length)toast(`${open.attachments.length} attachment(s) will be forwarded`);}
+$('#composeBtn').onclick=()=>openCompose();
+$('#ccToggle').onclick=()=>{$('#ccRow').style.display='';$('#bccRow').style.display='';$('#ccc').focus();};
+$('#cmin').onclick=()=>{const b=$('#cbody');b.style.display=b.style.display==='none'?'flex':'none';};$('#cmax').onclick=()=>C.classList.toggle('max');
+$('#cclose').onclick=()=>{saveDraft();C.classList.remove('show');};
+$('#cdiscard').onclick=()=>{if(($('#ced').innerText.trim()||$('#cto').value)&&!confirm('Discard this message?'))return;drafts=drafts.filter(d=>d.id!==composeState?.id);pushDrafts();C.classList.remove('show');};
+document.querySelectorAll('[data-ex]').forEach(b=>{b.addEventListener('mousedown',e=>e.preventDefault());b.onclick=()=>{$('#ced').focus();document.execCommand(b.dataset.ex,false,null);};});
+$('#clink').onclick=()=>{const u=prompt('Link URL','https://');if(u){$('#ced').focus();document.execCommand('createLink',false,u);}};
+$('#crtl').onclick=()=>{const e=$('#ced');e.dir=e.dir==='rtl'?'ltr':'rtl';};
+$('#cattach').onclick=()=>$('#cfile').click();$('#cfile').onchange=e=>{composeState.files.push(...e.target.files);e.target.value='';renderFiles();};
+function renderFiles(){$('#cfiles').innerHTML=(composeState?.files||[]).map((f,i)=>`<span>📎 ${esc(f.name)} (${fmtSize(f.size)})<b data-i="${i}">✕</b></span>`).join('');$('#cfiles').querySelectorAll('b').forEach(b=>b.onclick=()=>{composeState.files.splice(+b.dataset.i,1);renderFiles();});}
+$('#ced').addEventListener('paste',e=>{const it=[...e.clipboardData.items].find(i=>i.type.startsWith('image/'));if(it){e.preventDefault();const f=it.getAsFile();composeState.files.push(new File([f],'pasted-image.png',{type:f.type}));renderFiles();}});
+$('#ced').addEventListener('drop',e=>{if(e.dataTransfer.files.length){e.preventDefault();composeState.files.push(...e.dataTransfer.files);renderFiles();}});
+$('#csend').onclick=async()=>{
+  const to=$('#cto').value.trim();if(!to){toast('Add at least one recipient');$('#cto').focus();return;}
+  if(!$('#csub').value.trim()&&!confirm('Send without a subject?'))return;
+  const fd=new FormData();fd.append('to',to);fd.append('cc',$('#ccc').value);fd.append('bcc',$('#cbcc').value);fd.append('subject',$('#csub').value);fd.append('html',`<div dir="${$('#ced').dir||'ltr'}">${$('#ced').innerHTML}</div>`);fd.append('text',$('#ced').innerText);
+  ['inReplyTo','references','inReplyToUid','inReplyToFolder','forwardUid','forwardFolder'].forEach(k=>{if(composeState[k])fd.append(k,composeState[k]);});
+  composeState.files.forEach(f=>fd.append('attachments',f,f.name));
+  $('#csend').innerHTML='<span class="spin" style="border-top-color:#fff"></span> Sending…';$('#csend').disabled=true;
+  try{await api(`/${acc.id}/send`,{method:'POST',body:fd});toast('Sent');drafts=drafts.filter(d=>d.id!==composeState.id);pushDrafts();C.classList.remove('show');if(folders.find(f=>f.path===folder)?.special==='sent')loadMessages(true);}
+  catch(e){toast('Not sent: '+e.message);}
+  $('#csend').textContent='Send';$('#csend').disabled=false;
+};
+/* drafts */
+async function loadDrafts(){try{drafts=await api(`/${acc.id}/drafts`);}catch{drafts=[];}renderFolders();}
+function pushDrafts(){api(`/${acc.id}/drafts`,{method:'PUT',body:JSON.stringify(drafts)}).catch(()=>{});renderFolders();}
+function saveDraft(){if(!composeState)return;const body=$('#ced').innerHTML;if(!$('#cto').value&&!$('#csub').value&&!$('#ced').innerText.trim())return;const d={id:composeState.id,to:$('#cto').value,cc:$('#ccc').value,bcc:$('#cbcc').value,subject:$('#csub').value,html:body,t:Date.now(),inReplyTo:composeState.inReplyTo,references:composeState.references};drafts=drafts.filter(x=>x.id!==d.id);drafts.unshift(d);pushDrafts();toast('Draft saved');}
+function renderDraftList(){$('#rows').innerHTML=drafts.length?drafts.map(d=>`<div class="row" data-d="${d.id}"><span></span><span></span><div><div class="who">To: ${esc(d.to||'(no recipient)')}</div><div class="sub">${esc(d.subject||'(no subject)')}</div></div><div class="d">${fmtDate(d.t)}</div></div>`).join(''):'<div class="empty">No drafts.</div>';$('#pginfo').textContent='';$('#rows').querySelectorAll('[data-d]').forEach(r=>r.onclick=()=>{const d=drafts.find(x=>x.id===r.dataset.d);openCompose({...d,title:'Draft'});});}
+setInterval(()=>{if(C.classList.contains('show'))saveDraftQuiet();},30000);
+function saveDraftQuiet(){if(!composeState||(!$('#cto').value&&!$('#csub').value&&!$('#ced').innerText.trim()))return;const d={id:composeState.id,to:$('#cto').value,cc:$('#ccc').value,bcc:$('#cbcc').value,subject:$('#csub').value,html:$('#ced').innerHTML,t:Date.now(),inReplyTo:composeState.inReplyTo,references:composeState.references};drafts=drafts.filter(x=>x.id!==d.id);drafts.unshift(d);api(`/${acc.id}/drafts`,{method:'PUT',body:JSON.stringify(drafts)}).catch(()=>{});}
+/* contacts autocomplete */
+async function loadContacts(){try{contacts=await api(`/${acc.id}/contacts`);}catch{contacts=[];}}
+let sIdx=-1;
+['cto','ccc','cbcc'].forEach(id=>{const inp=document.getElementById(id);inp.addEventListener('input',()=>{const parts=inp.value.split(',');const cur=parts.at(-1).trim().toLowerCase();const sg=$('#sugg');if(cur.length<2){sg.style.display='none';return;}const hits=contacts.filter(c=>(c.name+' '+c.address).toLowerCase().includes(cur)).slice(0,8);if(!hits.length){sg.style.display='none';return;}sg.innerHTML=hits.map(h=>`<div data-a="${esc(h.address)}">${esc(h.name||h.address)}${h.name?`<small>${esc(h.address)}</small>`:''}</div>`).join('');sg.style.display='block';sg.style.top=inp.getBoundingClientRect().bottom-C.getBoundingClientRect().top+'px';sIdx=-1;sg.querySelectorAll('div').forEach(d=>d.onmousedown=e=>{e.preventDefault();parts[parts.length-1]=' '+d.dataset.a;inp.value=parts.join(',').replace(/^ /,'')+', ';sg.style.display='none';});});
+  inp.addEventListener('keydown',e=>{const sg=$('#sugg');if(sg.style.display!=='block')return;const items=sg.querySelectorAll('div');if(e.key==='ArrowDown'){e.preventDefault();sIdx=(sIdx+1)%items.length;}else if(e.key==='ArrowUp'){e.preventDefault();sIdx=(sIdx-1+items.length)%items.length;}else if(e.key==='Enter'||e.key==='Tab'){if(sIdx>=0){e.preventDefault();items[sIdx].dispatchEvent(new MouseEvent('mousedown'));}return;}else if(e.key==='Escape'){sg.style.display='none';return;}else return;items.forEach((d,i)=>d.classList.toggle('on',i===sIdx));});
+  inp.addEventListener('blur',()=>setTimeout(()=>$('#sugg').style.display='none',150));});
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement.tagName;const inUI=tag==='INPUT'||tag==='TEXTAREA'||document.activeElement.isContentEditable||document.activeElement.closest('dialog');
+  if(e.key==='Escape'){if(C.classList.contains('show')&&!inUI){saveDraft();C.classList.remove('show');}else if(inUI)document.activeElement.blur();else{$('#reader').classList.remove('open');}return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&C.classList.contains('show')){$('#csend').click();return;}
+  if(inUI)return;
+  const k=e.key.toLowerCase();
+  if(k==='c'){e.preventDefault();openCompose();}else if(k==='r'&&!e.ctrlKey){loadFolders(true);loadMessages();}else if(k==='e'){doAction('archive');}else if(k==='#'||k==='delete'){doAction('trash');}else if(k==='s'){const t=targets();const m=messages.find(x=>x.uid===t[0]);if(m)doAction(m.flagged?'unstar':'star',t);}else if(k==='u'){doAction('unread');}else if(k==='/'){e.preventDefault();$('#q').focus();}
+  else if(k==='j'||k==='k'){const i=messages.findIndex(m=>m.uid===open?.uid);const n=messages[i+(k==='j'?1:-1)];if(n)openMessage(n.uid);}
+  else if(k==='a'&&open){reply(true);}else if(k==='f'&&open){forward();}
+});
+
+/* ---------- misc ---------- */
+function ctxMenu(e,items){const c=$('#ctx');c.innerHTML='';items.forEach(it=>{if(it==='-'){c.appendChild(document.createElement('hr'));return;}const b=document.createElement('button');b.textContent=it[0];b.onclick=()=>{c.classList.remove('show');it[1]();};c.appendChild(b);});c.style.left=Math.min(e.clientX,innerWidth-200)+'px';c.style.top=Math.min(e.clientY,innerHeight-items.length*32-10)+'px';c.classList.add('show');}
+document.addEventListener('click',e=>{if(!e.target.closest('.ctx'))$('#ctx').classList.remove('show');if(e.target.closest('[data-close]'))e.target.closest('dialog').close();});
+$('#themeBtn').onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'':'dark';localStorage.setItem('mail.theme',r.dataset.theme);};
+document.documentElement.dataset.theme=localStorage.getItem('mail.theme')||'';
+if('Notification' in window&&Notification.permission==='default')setTimeout(()=>Notification.requestPermission(),4000);
+let lastTop=null;const _lm=loadMessages;loadMessages=async function(quiet){await _lm(quiet);if(folder==='INBOX'&&!q&&page===0&&messages.length){const top=messages[0];if(lastTop&&top.uid>lastTop&&!top.seen&&Notification.permission==='granted')new Notification(top.from[0]?.name||top.from[0]?.address||'New mail',{body:top.subject});lastTop=top.uid;}};
+init();
+</script>
+</body>
+</html>
