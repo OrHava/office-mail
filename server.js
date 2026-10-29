@@ -223,6 +223,52 @@ app.post('/api/:acc/send', upload.array('attachments'), wrap(async (req, res) =>
   res.json({ ok: true, messageId: info.messageId });
 }));
 
+/* ---------- scheduled send ---------- */
+const schedFile = path.join(DATA, 'scheduled.json');
+const loadSched = () => (fs.existsSync(schedFile) ? JSON.parse(fs.readFileSync(schedFile, 'utf8')) : []);
+const saveSched = x => fs.writeFileSync(schedFile, JSON.stringify(x, null, 1));
+app.get('/api/:acc/scheduled', (req, res) => res.json(loadSched().filter(m => m.acc === req.params.acc).map(({ files, ...m }) => ({ ...m, attachments: (files || []).map(f => f.filename) }))));
+app.post('/api/:acc/scheduled', upload.array('attachments'), (req, res) => {
+  const all = loadSched();
+  all.push({ id: Math.random().toString(36).slice(2, 10), acc: req.params.acc, at: +req.body.at, body: req.body, files: (req.files || []).map(f => ({ filename: f.originalname, contentType: f.mimetype, content: f.buffer.toString('base64') })) });
+  saveSched(all); res.json({ ok: true });
+});
+app.delete('/api/:acc/scheduled/:id', (req, res) => { saveSched(loadSched().filter(m => m.id !== req.params.id)); res.json({ ok: true }); });
+async function sendMail(accId, b, files) {
+  const acc = loadAccounts().find(a => a.id === accId); if (!acc) throw new Error('Account not found');
+  const transport = nodemailer.createTransport({ host: acc.smtpHost, port: acc.smtpPort, secure: acc.smtpPort === 465, auth: { user: acc.user, pass: acc.password } });
+  const mail = { from: { name: acc.name, address: acc.email }, to: b.to, cc: b.cc || undefined, bcc: b.bcc || undefined, subject: b.subject || '', html: b.html || '', text: b.text || undefined, inReplyTo: b.inReplyTo || undefined, references: b.references || undefined, attachments: files };
+  const info = await transport.sendMail(mail);
+  try { const { c } = await client(accId); const list = await c.list(); const sent = list.find(f => f.specialUse === '\\Sent'); if (sent && !/gmail|googlemail/i.test(acc.imapHost)) { const raw = await nodemailer.createTransport({ streamTransport: true, buffer: true }).sendMail(mail); await c.append(sent.path, raw.message, ['\\Seen']); } } catch (e) { console.warn('append to Sent failed:', e.message); }
+  return info;
+}
+setInterval(async () => {
+  const all = loadSched(); const due = all.filter(m => m.at <= Date.now()); if (!due.length) return;
+  for (const m of due) { try { await sendMail(m.acc, m.body, (m.files || []).map(f => ({ filename: f.filename, contentType: f.contentType, content: Buffer.from(f.content, 'base64') }))); console.log('scheduled mail sent', m.id); } catch (e) { console.error('scheduled send failed', e.message); m.at = Date.now() + 10 * 60 * 1000; m.error = e.message; continue; } m.done = true; }
+  saveSched(all.filter(m => !m.done));
+}, 30000);
+
+/* ---------- vacation auto-responder ---------- */
+const vacFile = id => path.join(DATA, `vacation-${id}.json`);
+app.get('/api/:acc/vacation', (req, res) => res.json(fs.existsSync(vacFile(req.params.acc)) ? JSON.parse(fs.readFileSync(vacFile(req.params.acc), 'utf8')) : { on: false, subject: '', body: '', replied: [] }));
+app.put('/api/:acc/vacation', (req, res) => { const old = fs.existsSync(vacFile(req.params.acc)) ? JSON.parse(fs.readFileSync(vacFile(req.params.acc), 'utf8')) : {}; fs.writeFileSync(vacFile(req.params.acc), JSON.stringify({ ...old, ...req.body, replied: old.replied || [] })); res.json({ ok: true }); });
+setInterval(async () => {
+  for (const acc of loadAccounts()) {
+    if (!fs.existsSync(vacFile(acc.id))) continue; const v = JSON.parse(fs.readFileSync(vacFile(acc.id), 'utf8')); if (!v.on) continue;
+    try {
+      await withLock(acc.id, 'INBOX', async c => {
+        const uids = await c.search({ seen: false, since: new Date(Date.now() - 2 * 3600e3) }, { uid: true });
+        for await (const m of c.fetch(uids || [], { uid: true, envelope: true }, { uid: true })) {
+          const from = m.envelope.from?.[0]?.address; if (!from || v.replied.includes(from.toLowerCase()) || /no-?reply|mailer-daemon|notification/i.test(from)) continue;
+          await sendMail(acc.id, { to: from, subject: v.subject || 'Re: ' + (m.envelope.subject || ''), html: v.body, inReplyTo: m.envelope.messageId }, []);
+          v.replied.push(from.toLowerCase());
+        }
+      });
+      fs.writeFileSync(vacFile(acc.id), JSON.stringify(v));
+    } catch (e) { console.warn('vacation check failed', e.message); }
+  }
+}, 120000);
+
 /* ---------- drafts (stored server-side, per account) ---------- */
 const draftsFile = id => path.join(DATA, `drafts-${id}.json`);
 app.get('/api/:acc/drafts', (req, res) => res.json(fs.existsSync(draftsFile(req.params.acc)) ? JSON.parse(fs.readFileSync(draftsFile(req.params.acc), 'utf8')) : []));
@@ -246,6 +292,9 @@ app.get('/api/:acc/contacts', wrap(async (req, res) => {
   res.json([...seen.values()].sort((a, b) => (a.name || a.address).localeCompare(b.name || b.address)));
 }));
 
+const kvFile = (id, k) => path.join(DATA, `${k}-${id}.json`);
+app.get('/api/:acc/kv/:key', (req, res) => { const f = kvFile(req.params.acc, req.params.key.replace(/\W/g, '')); res.json(fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null); });
+app.put('/api/:acc/kv/:key', (req, res) => { fs.writeFileSync(kvFile(req.params.acc, req.params.key.replace(/\W/g, '')), JSON.stringify(req.body)); res.json({ ok: true }); });
 app.get('/api/health', (req, res) => res.json({ ok: true, accounts: loadAccounts().length, protected: !!APP_PASSWORD }));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, () => console.log(`Mail is running at http://localhost:${PORT}`));

@@ -31,6 +31,8 @@ Hosts and ports are auto-detected for common providers; anything else goes under
 - Drafts auto-saved every 30 s, multiple accounts, dark mode, mobile layout
 - Keyboard shortcuts: `C` compose, `R` refresh, `E` archive, `#` delete, `S` star, `U` unread, `J`/`K` next/prev, `A` reply all, `F` forward, `/` search, `Ctrl+Enter` send, `Esc` close
 - New-mail desktop notifications (polls every minute)
+- **AI assistant** (your own Anthropic/OpenAI key): summarize, draft a reply, 3 quick replies, extract action items, fix/professionalize your draft, translate
+- Conversation threading, snooze, scheduled send, undo send (8 s), templates, filters/rules, vacation auto-reply, unified inbox across accounts, swipe left/right on mobile (archive / snooze)
 
 ## Run it somewhere permanent
 - **Always on at home:** `npm install -g pm2 && pm2 start server.js --name mail && pm2 save`
